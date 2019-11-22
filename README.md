@@ -1,7 +1,7 @@
 # Projects
 
 ## Toxic Comment Classification (Natural Language Processing)                   
-•	Applied word embeddings for semantic parsing of 150k comments from Wikipedia’s talk page edits /
+•	Applied word embeddings for semantic parsing of 150k comments from Wikipedia’s talk page edits /n
 •	Built Bidirectional Recurrent Neural Networks (RNN) and used Long Short-Term Memory (LSTM) to classify toxic comments with Python
 
 •	Compared Support Vector Machines with Recurrent Neural Networks, and the latter one is better
