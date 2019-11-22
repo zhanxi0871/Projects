@@ -2,9 +2,9 @@
 
 ## Toxic Comment Classification (Natural Language Processing)                   
 •	Applied word embeddings for semantic parsing of 150k comments from Wikipedia’s talk page edits.  
-•	Built Bidirectional Recurrent Neural Networks (RNN) and used Long Short-Term Memory (LSTM) to classify toxic comments with Python. 
-•	Compared Support Vector Machines with Recurrent Neural Networks, and the latter one is better. 
-•	Achieved the accuracy of 0.97, and helped online discussion become more productive and respectful. 
+•	Built Bidirectional Recurrent Neural Networks (RNN) and used Long Short-Term Memory (LSTM) to classify toxic comments with Python.  
+•	Compared Support Vector Machines with Recurrent Neural Networks, and the latter one is better.  
+•	Achieved the accuracy of 0.97, and helped online discussion become more productive and respectful.  
 
 ## Analysis on Senator Votes for Prediction                              
 •	Collected data of 1000 senate roll call votes from Legacy Voteview Website.  
