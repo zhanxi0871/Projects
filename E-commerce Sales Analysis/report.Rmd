@@ -1,0 +1,260 @@
+---
+title: "Ecommerce"
+author: "Xin Zhang"
+date: ""
+output: pdf_document
+---
+
+```{r include=FALSE}
+customers <- read.csv("~/Desktop/ecommerce/dataset/customers.csv",sep = ";")
+orders <- read.csv("~/Desktop/ecommerce/dataset/orders.csv",sep = ";")
+orders_items <- read.csv("~/Desktop/ecommerce/dataset/orders_items.csv",sep = ";")
+products <- read.csv("~/Desktop/ecommerce/dataset/products.csv",sep = ";")
+products_skus <- read.csv("~/Desktop/ecommerce/dataset/products_skus.csv",sep = ";")
+traffic <- read.csv("~/Desktop/ecommerce/dataset/traffic.csv",sep = ";")
+transactions <- read.csv("~/Desktop/ecommerce/dataset/transactions.csv",sep = ";")
+```
+
+In this report, we will make analysis on the data collected from an online store. The data includes product information and customer transaction records from 2016 to 2018. I will find out the online shopping behaviors of the customers and make marketing suggestions for the store in order to increase the customers’ life-time value to the company.
+
+## 1
+
+### web traffic over time
+
+From the plot of page views with time and sessions with time, we can see that the overall web traffic increases from August 2016 to June 2017 and then decreases from June 2017 to January 2018.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+library(ggplot2)
+library(dplyr)
+#summary(traffic)
+#sum(traffic$page_views>50000)
+traffic1 <- traffic[which(traffic$page_views<50000),]
+plot(traffic1$page_views~traffic1$date_day, xlab="date",ylab="page views")
+#sum(traffic$sessions>20000)
+traffic2 <- traffic[which(traffic$sessions<15000),]
+plot(traffic2$sessions~traffic2$date_day, xlab="date",ylab="sessions")
+
+```
+
+### orders over time
+
+From the plot of orders with time we can see that the numbers of orders are slightly increasing from August 2016 to May 2017 and decreases a bit from June 2017 to January 2018.
+
+```{r echo=FALSE}
+orders1 <- orders[which(orders$fulfillment_status=="fulfilled"),]
+ordernum <- as.data.frame(table(orders$created_at))
+plot(ordernum[which(ordernum$Freq<200),], xlab="date",ylab="order numbers")
+
+```
+
+### Correlation between orders and web traffic
+
+We can see that there is positive correlation between orders and web traffic. It makes sense because if the page views and sessions increase, the customers tend to order more; while there are not so many page views and seesions, it may not exists many orders.
+
+## 2.
+
+```{r include=FALSE}
+table1 <- merge(orders,orders_items,by.x = "id", by.y = "order_id")
+table2 <- merge(table1,products,by.x = "product_id", by.y = "id")
+table3 <- merge(table2,customers,by.x = "customer_id", by.y = "id")
+```
+
+```{r, include=FALSE}
+library(lubridate)
+typenum <- as.matrix(table(table2$product_type))
+toppro <- table2[which(table2$product_type=="Top"),]
+topmon <- month(as.POSIXlt(toppro$created_at.x, format="%Y-%m-%d"))
+sum(topmon<4)
+sum(topmon<7 & topmon>3)
+sum(topmon<10 & topmon>6)
+sum(topmon>9)
+
+dresspro <- table2[which(table2$product_type=="Dress"),]
+dressmon <- month(as.POSIXlt(dresspro$created_at.x, format="%Y-%m-%d"))
+sum(dressmon<4)
+sum(dressmon<7 & dressmon>3)
+sum(dressmon<10 & dressmon>6)
+sum(dressmon>9)
+
+trouserspro <- table2[which(table2$product_type=="Trousers"),]
+trousersmon <- month(as.POSIXlt(trouserspro$created_at.x, format="%Y-%m-%d"))
+sum(trousersmon<4)
+sum(trousersmon<7 & trousersmon>3)
+sum(trousersmon<10 & trousersmon>6)
+sum(trousersmon>9)
+
+sweaterspro <- table2[which(table2$product_type=="Sweater"),]
+sweatersmon <- month(as.POSIXlt(sweaterspro$created_at.x, format="%Y-%m-%d"))
+sum(sweatersmon<4)
+sum(sweatersmon<7 & sweatersmon>3)
+sum(sweatersmon<10 & sweatersmon>6)
+sum(sweatersmon>9)
+```
+
+We choose the product types that sell best: Top, Dress and Trousers. The table shows the numbers of sales of each type in four seasons.
+
+Type  |Spring|Summer|Autumn|Winter
+-----|--------|------|------|------
+Top | 5 |  10 |28|14  
+dress| 3| 10 |8 |5
+Trousers | 2 | 2| 13 | 6
+
+
+
+We can see that number of Top and Trousers are sold more in Autumn and Winter but less in Spring and Summer. Dress is sold more in Summer but less in winter. There are positive correlation between Top and trousers and negative correlation between top and dress and between trousers and dress. This is reasonable since the top and trousers are complementary goods, but these two types are substitute for dress. In summer when the weather is hot, women often wear dresses. When it comes to autume and winter, the weather gets cold, they tend to choose tops and trousers.
+
+
+### 3.
+```{r include=FALSE}
+disnum <- products[which(products$created_at=="2017-02-28" | products$created_at=="2017-05-23" | products$created_at=="2017-09-25"),3]
+nondisnum <- products[which(products$created_at!="2017-02-28" & products$created_at!="2017-05-23" & products$created_at!="2017-09-25"),3]
+table(disnum)
+table(nondisnum)
+```
+
+```{r}
+sum(which(table2$total_discounts==0))
+sum(which(table2$total_discounts!=0))    
+gotdis1 <- table2[which(table2$total_discounts==0),]
+gotdis2 <- table2[which(table2$total_discounts!=0),]
+discountnum1 <- as.matrix(table(gotdis1$product_type))
+discountnum2 <- as.matrix(table(gotdis2$product_type))
+disc <- cbind(discountnum1,discountnum2)
+```
+
+For different types of products, we compare their sells when they have discounts. We find that Top, Dress, Shorts and Sweaters sold better under discounts, while others does not differ a lot. 
+
+### 4.
+
+
+```{r include=FALSE}
+trafficmon <- month(as.POSIXlt(traffic$date_day, format="%Y-%m-%d"))
+trafficyea <- year(as.POSIXlt(traffic$date_day, format="%Y-%m-%d"))
+traffic3 <- cbind(traffic,trafficmon,trafficyea)
+ordermon <- month(as.POSIXlt(orders$created_at, format="%Y-%m-%d"))
+orderyea <- year(as.POSIXlt(orders$created_at, format="%Y-%m-%d"))
+orders3 <- cbind(orders,ordermon,orderyea)
+od <- rep(0,20)
+chu <- rep(0,20)
+chu2 <- rep(0,20)
+# 2016-8
+chu[1] <- sum(traffic[which(traffic3$trafficmon==8&traffic3$trafficyea==2016),3])
+chu2[1] <- sum(traffic[which(traffic3$trafficmon==8&traffic3$trafficyea==2016),4])
+od[1] <- length(which(orders3$ordermon==8&orders3$orderyea==2016))
+# 2016-9
+chu[2] <- sum(traffic[which(traffic3$trafficmon==9&traffic3$trafficyea==2016),3])
+chu2[2] <- sum(traffic[which(traffic3$trafficmon==9&traffic3$trafficyea==2016),4])
+od[2] <- length(which(orders3$ordermon==9&orders3$orderyea==2016))
+#2016-10
+chu[3] <- sum(traffic[which(traffic3$trafficmon==10&traffic3$trafficyea==2016),3])
+chu2[3] <- sum(traffic[which(traffic3$trafficmon==10&traffic3$trafficyea==2016),4])
+od[3] <- length(which(orders3$ordermon==10&orders3$orderyea==2016))
+#2016-11
+chu[4] <- sum(traffic[which(traffic3$trafficmon==11&traffic3$trafficyea==2016),3])
+chu2[4] <- sum(traffic[which(traffic3$trafficmon==11&traffic3$trafficyea==2016),4])
+od[4] <- length(which(orders3$ordermon==11&orders3$orderyea==2016))
+#2016-12
+chu[5] <- sum(traffic[which(traffic3$trafficmon==12&traffic3$trafficyea==2016),3])
+chu2[5] <- sum(traffic[which(traffic3$trafficmon==12&traffic3$trafficyea==2016),4])
+od[5] <- length(which(orders3$ordermon==12&orders3$orderyea==2016))
+#2017-1
+chu[6] <- sum(traffic[which(traffic3$trafficmon==1&traffic3$trafficyea==2017),3])
+chu2[6] <- sum(traffic[which(traffic3$trafficmon==1&traffic3$trafficyea==2017),4])
+od[6] <- length(which(orders3$ordermon==1&orders3$orderyea==2017))
+#2017-2
+chu[7] <- sum(traffic[which(traffic3$trafficmon==2&traffic3$trafficyea==2017),3])
+chu2[7] <- sum(traffic[which(traffic3$trafficmon==2&traffic3$trafficyea==2017),4])
+od[7] <- length(which(orders3$ordermon==2&orders3$orderyea==2017))
+#2017-3
+chu[8] <- sum(traffic[which(traffic3$trafficmon==3&traffic3$trafficyea==2017),3])
+chu2[8] <- sum(traffic[which(traffic3$trafficmon==3&traffic3$trafficyea==2017),4])
+od[8] <- length(which(orders3$ordermon==3&orders3$orderyea==2017))
+#2017-4
+chu[9] <- sum(traffic[which(traffic3$trafficmon==4&traffic3$trafficyea==2017),3])
+chu2[9] <- sum(traffic[which(traffic3$trafficmon==4&traffic3$trafficyea==2017),4])
+od[9] <- length(which(orders3$ordermon==4&orders3$orderyea==2017))
+#2017-5
+chu[10] <- sum(traffic[which(traffic3$trafficmon==5&traffic3$trafficyea==2017),3])
+chu2[10] <- sum(traffic[which(traffic3$trafficmon==5&traffic3$trafficyea==2017),4])
+od[10] <- length(which(orders3$ordermon==5&orders3$orderyea==2017))
+#2017-6
+chu[11] <- sum(traffic[which(traffic3$trafficmon==6&traffic3$trafficyea==2017),3])
+chu2[11] <- sum(traffic[which(traffic3$trafficmon==6&traffic3$trafficyea==2017),4])
+od[11] <- length(which(orders3$ordermon==6&orders3$orderyea==2017))
+#2017-7
+chu[12] <- sum(traffic[which(traffic3$trafficmon==7&traffic3$trafficyea==2017),3])
+chu2[12] <- sum(traffic[which(traffic3$trafficmon==7&traffic3$trafficyea==2017),4])
+od[12] <- length(which(orders3$ordermon==7&orders3$orderyea==2017))
+#2017-8
+chu[13] <- sum(traffic[which(traffic3$trafficmon==8&traffic3$trafficyea==2017),3])
+chu2[13] <- sum(traffic[which(traffic3$trafficmon==8&traffic3$trafficyea==2017),4])
+od[13] <- length(which(orders3$ordermon==8&orders3$orderyea==2017))
+#2017-9
+chu[14] <- sum(traffic[which(traffic3$trafficmon==9&traffic3$trafficyea==2017),3])
+chu2[14] <- sum(traffic[which(traffic3$trafficmon==9&traffic3$trafficyea==2017),4])
+od[14] <- length(which(orders3$ordermon==9&orders3$orderyea==2017))
+#2017-10
+chu[15] <- sum(traffic[which(traffic3$trafficmon==10&traffic3$trafficyea==2017),3])
+chu2[15] <- sum(traffic[which(traffic3$trafficmon==10&traffic3$trafficyea==2017),4])
+od[15] <- length(which(orders3$ordermon==10&orders3$orderyea==2017))
+#2017-11
+chu[16] <- sum(traffic[which(traffic3$trafficmon==11&traffic3$trafficyea==2017),3])
+chu2[16] <- sum(traffic[which(traffic3$trafficmon==11&traffic3$trafficyea==2017),4])
+od[16] <- length(which(orders3$ordermon==11&orders3$orderyea==2017))
+#2017-12
+chu[17] <- sum(traffic[which(traffic3$trafficmon==12&traffic3$trafficyea==2017),3])
+chu2[17] <- sum(traffic[which(traffic3$trafficmon==12&traffic3$trafficyea==2017),4])
+od[17] <- length(which(orders3$ordermon==12&orders3$orderyea==2017))
+#2018-1
+chu[18] <- sum(traffic[which(traffic3$trafficmon==1&traffic3$trafficyea==2018),3])
+chu2[18] <- sum(traffic[which(traffic3$trafficmon==1&traffic3$trafficyea==2018),4])
+od[18] <- length(which(orders3$ordermon==1&orders3$orderyea==2018))
+#2018-2
+chu[19] <- sum(traffic[which(traffic3$trafficmon==2&traffic3$trafficyea==2018),3])
+chu2[19] <- sum(traffic[which(traffic3$trafficmon==2&traffic3$trafficyea==2018),4])
+od[19] <- length(which(orders3$ordermon==2&orders3$orderyea==2018))
+#2018-3
+chu[20] <- sum(traffic[which(traffic3$trafficmon==3&traffic3$trafficyea==2018),3])
+chu2[20] <- sum(traffic[which(traffic3$trafficmon==3&traffic3$trafficyea==2018),4])
+od[20] <- length(which(orders3$ordermon==3&orders3$orderyea==2018))
+churate <- rep(0,19)
+for (i in 1:19){
+  churate[i] <- (chu[i]-chu[i+1])/chu[i]
+}
+churate
+od/chu
+```
+
+
+
+Month| Churn rate | Conversion rate(%)
+-----|----------- | ---------------
+2016-08 | 0.58    | 0.12
+2016-09 | 0.28    | 0.25
+2016-10 | -1.69   | 0.23
+2016-11 | 0.56    |0.25
+2016-12 | 0.38    | 0.17
+2017-01 | -0.01   | 0.18
+2017-02 | -1.91   |0.30
+2017-03 |0.42     | 0.17
+2017-04 | -0.24   |0.28
+2017-05 | -0.13   |0.20
+2017-06 | 0.25    |0.23
+2017-07 | -0.83   |0.19
+2017-08 | 0.67    |0.19
+2017-09 | -0.94   |0.22
+2017-10 | -0.12   |0.17
+2017-11 | 0.23    |0.16
+2017-12| 0.49     |0.07
+2018-01| 0.11     |0.24
+2018-02| -0.51    |0.26
+
+
+From the table we can see that churn rate is mostly negative in winter and spring but positive in summer and autumn. Conversion rate is higher in winter and spring and lower in summer and autumn. Based on the above questions, we need to take actions in summer and autumn to improve sales.  Dresses are the best seller in summer; top and trousers are the best sellers in autumn. So we can promote more on dress in summer and more on top and trousers in autumn. Also, offering more discounts on top and dress will improve the sales a lot.
+
+
+```{r}
+custo <- table(table3$customer_id)
+customers2 <- 
+```
+
